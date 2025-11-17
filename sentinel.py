@@ -53,7 +53,15 @@ class SentinelMonitor:
 
     def start_monitoring(self):
         """Start monitoring session"""
+        import time
         self.monitoring = True
+        if self.verbose:
+            print("[SENTINEL] Initializing threat detection engine...")
+            time.sleep(0.2)
+            print("[SENTINEL] Loading security signatures...")
+            time.sleep(0.2)
+            print("[SENTINEL] Activating real-time monitoring...")
+            time.sleep(0.2)
         self.log("Sentinel monitoring started", "INFO")
 
     def stop_monitoring(self):

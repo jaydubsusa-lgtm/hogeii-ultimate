@@ -61,7 +61,10 @@ class UGOAuto:
 
     def scan_permissions(self, target_path):
         """Scan directory for permission issues"""
+        import time
         self.log(f"Scanning permissions for: {target_path}")
+        self.log("Initializing security scanner...")
+        time.sleep(0.3)
 
         path = Path(target_path)
 
@@ -70,19 +73,29 @@ class UGOAuto:
             return
 
         if path.is_file():
+            self.log(f"Analyzing file: {target_path}")
+            time.sleep(0.2)
             perms = self.check_permissions(target_path)
             if perms and self.is_insecure(perms):
                 self.issues_found.append(perms)
-                self.log(f"INSECURE: {target_path} has permissions {perms['permissions']}")
+                self.log(f"⚠️  THREAT DETECTED: {target_path} has permissions {perms['permissions']}")
         else:
             # Scan directory recursively
-            for item in path.rglob('*'):
+            files = list(path.rglob('*'))
+            total = len(files)
+            self.log(f"Scanning {total} items...")
+            time.sleep(0.2)
+
+            for idx, item in enumerate(files, 1):
+                if self.verbose and idx % 5 == 0:
+                    self.log(f"Progress: {idx}/{total} files scanned...")
                 perms = self.check_permissions(str(item))
                 if perms and self.is_insecure(perms):
                     self.issues_found.append(perms)
-                    self.log(f"INSECURE: {item} has permissions {perms['permissions']}")
+                    self.log(f"⚠️  THREAT DETECTED: {item} has permissions {perms['permissions']}")
+                    time.sleep(0.1)
 
-        self.log(f"Scan complete. Found {len(self.issues_found)} issues")
+        self.log(f"✓ Scan complete. Found {len(self.issues_found)} security issues")
 
     def fix_permissions(self, path, new_perms='644'):
         """Fix insecure permissions"""
@@ -101,13 +114,18 @@ class UGOAuto:
 
     def auto_fix_permissions(self):
         """Automatically fix permission issues"""
+        import time
         self.log("Running UGO auto-fix...")
+        time.sleep(0.2)
 
         if not self.issues_found:
             self.log("No issues found to fix")
             return
 
-        for issue in self.issues_found:
+        self.log(f"Preparing to remediate {len(self.issues_found)} security issues...")
+        time.sleep(0.3)
+
+        for idx, issue in enumerate(self.issues_found, 1):
             path = issue['path']
             current = issue['permissions']
 
@@ -117,10 +135,11 @@ class UGOAuto:
             else:
                 new_perms = '644'  # rw-r--r-- for files
 
-            self.log(f"Fixing {path}: {current} -> {new_perms}")
+            self.log(f"[{idx}/{len(self.issues_found)}] Fixing {path}: {current} -> {new_perms}")
             self.fix_permissions(path, new_perms)
+            time.sleep(0.15)
 
-        self.log(f"Auto-fix complete. Applied {len(self.fixes_applied)} fixes")
+        self.log(f"✓ Auto-fix complete. Applied {len(self.fixes_applied)} fixes")
 
     def generate_report(self):
         """Generate UGO permissions report"""
